@@ -10,7 +10,13 @@ import (
 	"fmt"
 )
 
-func PlotSimulation(palette color.Palette, recorders ...*core.WorkerRecorder) {
+func PlotSimulation(palette color.Palette,  simulation *core.DiscreteSpace) {
+
+	recorders := make([]*core.WorkerRecorder, 0)
+	for _, worker := range simulation.Workers {
+		recorders = append(recorders, worker.Recorder)
+	}
+
 	p, err := plot.New()
 	if err != nil {
 		panic(err)
@@ -47,6 +53,24 @@ func PlotSimulation(palette color.Palette, recorders ...*core.WorkerRecorder) {
 			panic(err.Error())
 		}
 	}
+	pts := make(plotter.XYs, len(simulation.Places))
+
+	auxCounter := 0
+	for _, place := range simulation.Places {
+		pts[auxCounter].X = place.XPos
+		pts[auxCounter].Y = place.YPos
+		auxCounter += 1
+	}
+
+	scatter, err := plotter.NewScatter(pts)
+	if err != nil {
+		panic(err.Error())
+	}
+	scatter.Radius = vg.Points(5)
+	scatter.Color = color.RGBA{255, 70, 0, 255}
+	scatter.Shape = draw.CircleGlyph{}
+	p.Add(scatter)
+	p.Legend.Add(fmt.Sprintf("Places"), scatter)
 
 	if err := p.Save(10*vg.Inch, 10*vg.Inch, "simulation.png"); err != nil {
 		panic(err)

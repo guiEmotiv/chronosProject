@@ -27,15 +27,15 @@ func NewGreedySearch(base *Place, tasks []*Task) *GreedySearch {
 	return &gs
 }
 
-func (algorithm GreedySearch) GetBase() *Place {
+func (algorithm *GreedySearch) GetBase() *Place {
 	return algorithm.Base
 }
 
-func (algorithm GreedySearch) GetTasks() map[string]*Task {
+func (algorithm *GreedySearch) GetTasks() map[string]*Task {
 	return algorithm.Tasks
 }
 
-func (algorithm GreedySearch) GetWeight(id string, worker *Worker) float64 {
+func (algorithm *GreedySearch) GetWeight(id string, worker *Worker) float64 {
 	task := *algorithm.Tasks[id]
 	goToPlace := task.Address()
 
@@ -54,7 +54,7 @@ func (algorithm GreedySearch) GetWeight(id string, worker *Worker) float64 {
 	return math.Pow(goToPlace.Priority/totalTime, 3)
 }
 
-func (algorithm GreedySearch) GetSortedTasks(worker *Worker) map[string]*Task {
+func (algorithm *GreedySearch) GetSortedTasks(worker *Worker) map[string]*Task {
 
 	weights := make(map[float64]string)
 	keys := make([]float64, 0)
@@ -80,4 +80,11 @@ func (algorithm GreedySearch) GetSortedTasks(worker *Worker) map[string]*Task {
 
 	return finalTasks
 
+}
+
+func (algorithm *GreedySearch) SetTasks(newTasks map[string]*Task) {
+	algorithm.Tasks = newTasks
+}
+func (algorithm *GreedySearch) SetBase(place *Place) {
+	algorithm.Base = place
 }

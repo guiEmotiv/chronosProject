@@ -5,4 +5,7 @@ type Heuristic interface {
 	GetSortedTasks(worker *Worker) map[string]*Task
 	GetTasks() map[string]*Task
 	GetBase() *Place
+
+	SetTasks(map[string]*Task)
+	SetBase(place *Place)
 }

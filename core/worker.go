@@ -22,6 +22,10 @@ type Worker struct {
 	ActionRadio float64 `json:"action_radio"`
 	Velocity    float64 `json:"velocity"`
 
+	BaseActionRadio float64
+
+	LastTaskFinished bool
+
 	Recorder *WorkerRecorder `json:"recorder"`
 
 	TimeBase time.Duration
@@ -34,7 +38,7 @@ type WorkerRecorder struct {
 	YPositions []float64
 	States     []map[int]float64
 
-	InternalStatus bool
+	Record bool
 }
 
 func NewWorker(initialPlace *Place, radio float64, velocity float64) *Worker {
@@ -49,6 +53,7 @@ func NewWorker(initialPlace *Place, radio float64, velocity float64) *Worker {
 
 	worker.Status = STOPPED
 	worker.ActionRadio = radio
+	worker.BaseActionRadio = radio
 
 	worker.Velocity = velocity
 
@@ -57,11 +62,13 @@ func NewWorker(initialPlace *Place, radio float64, velocity float64) *Worker {
 	worker.Recorder = recorder
 	worker.Recorder.States = make([]map[int]float64, 1)
 
+	worker.LastTaskFinished = false
+
 	return worker
 }
 
 func (worker *Worker) NextPosition(c *DiscreteSpace) {
-	if worker.Recorder.InternalStatus {
+	if worker.Recorder.Record {
 		worker.Recorder.XPositions = append(worker.Recorder.XPositions, worker.XPos)
 		worker.Recorder.YPositions = append(worker.Recorder.YPositions, worker.YPos)
 		worker.Recorder.States = append(worker.Recorder.States, map[int]float64{worker.Status: c.ElapsedTime.Seconds()})
@@ -96,13 +103,19 @@ func (worker *Worker) NextPosition(c *DiscreteSpace) {
 
 func (worker *Worker) checkIfArrived(c *DiscreteSpace) bool {
 
-	offset := 0.05
+	offset := 0.5
 
 	if worker.Status == TRAVELING {
 		// log.Println("Changing from traveling to arrived")
 		if worker.XPos < worker.To.XPos+offset && worker.XPos > worker.To.XPos-offset {
 			if worker.YPos < worker.To.YPos+offset && worker.YPos > worker.To.YPos-offset {
-				worker.Status = ARRIVED
+
+				worker.XPos = worker.To.XPos
+				worker.YPos = worker.To.YPos
+
+				//worker.Status = ARRIVED
+				worker.Status = STOPPED
+
 				return true
 			}
 
@@ -134,7 +147,7 @@ func (worker *Worker) checkIfIsOperating(c *DiscreteSpace) bool {
 		trueExpectedTime := expectedDuration * worker.TimeBase
 		if c.ElapsedTime > trueExpectedTime {
 			worker.Status = OPERATING
-
+			worker.ActionRadio = 0
 			worker.InitOperatingTime = time.Duration(c.ElapsedTime)
 			return true
 
@@ -144,6 +157,9 @@ func (worker *Worker) checkIfIsOperating(c *DiscreteSpace) bool {
 
 	if worker.Status == OPERATING {
 		worker.Status = OPERATING
+		dR := worker.BaseActionRadio/worker.To.OperationTime
+		worker.ActionRadio += dR
+		// worker.To.OperationTime
 	}
 
 	return false
@@ -159,6 +175,9 @@ func (worker *Worker) checkForNextTravel(c *DiscreteSpace) bool {
 		if c.ElapsedTime-worker.InitOperatingTime > expectedOperatingTime {
 
 			worker.Status = STOPPED
+			worker.LastTaskFinished = true
+			worker.ActionRadio = worker.BaseActionRadio
+
 			return true
 		}
 	}
@@ -168,9 +187,9 @@ func (worker *Worker) checkForNextTravel(c *DiscreteSpace) bool {
 }
 
 func (worker *Worker) RefreshStatus(c *DiscreteSpace) {
-
 	worker.checkIfArrived(c)
 	worker.checkIfIsWaiting(c)
 	worker.checkIfIsOperating(c)
 	worker.checkForNextTravel(c)
+
 }

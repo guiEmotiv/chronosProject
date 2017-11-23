@@ -11,7 +11,7 @@ type Place struct {
 }
 
 func NewPlace(pX, pY float64, priority float64, expectedArriveTime float64,
-	operationTime float64, arrived float64, L float64) *Place {
+	operationTime float64, arrived float64, status float64) *Place {
 
 	place := new(Place)
 	place.XPos = pX

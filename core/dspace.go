@@ -44,15 +44,20 @@ func (space *DiscreteSpace) AddWorker(w *Worker) {
 	space.Workers[id] = w
 }
 
-func (space *DiscreteSpace) MainLoop(extraHandler func(context *DiscreteSpace), maxsDuration ...time.Duration) {
+
+
+
+
+
+func (space *DiscreteSpace) MainLoop(extraHandler func(context *DiscreteSpace), maxDuration ...time.Duration) {
 	if len(maxDuration) > 0 && len(maxDuration) < 2 {
 		space.SimulationInitializedTime = time.Now()
 		finalTime := space.SimulationInitializedTime.Add(maxDuration[0])
 		for finalTime.Sub(space.CurrentTime) > 0 {
 
 			extraHandler(space)
-			space.CurrentTime = time.Now()
 			space.Step()
+			space.CurrentTime = time.Now()
 			time.Sleep(space.TickTime)
 		}
 	} else {
